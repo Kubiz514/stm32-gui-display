@@ -184,7 +184,11 @@ int main(void)
 		if (!lcd_is_busy())
 		{
 			draw_menu_top_bar(20);
+
+			/* GUI PAGES BEGIN */
 			draw_joystick_demo(20, 40, adc1_readings[1], adc1_readings[2]);
+			/* GUI PAGES END */
+
 			lcd_copy();
 		}
 

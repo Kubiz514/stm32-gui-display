@@ -72,6 +72,15 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	}
 }
 
+//Button interrupt
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	//Next page button
+	if (GPIO_Pin == BTN1_IN_Pin) {
+
+	}
+}
+
 void draw_text(uint32_t number_input, int16_t x0, int16_t y0)
 {
 	wchar_t text_buffer[5];

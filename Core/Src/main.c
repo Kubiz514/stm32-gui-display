@@ -230,15 +230,14 @@ int main(void)
 	lcd_init();
 
 	// setup joystick demo
-	volatile static uint16_t adc1_readings[3];
+	volatile static uint16_t adc1_readings[2];
 
 	// setup ADC1 reading with DMA
-	// channel 1: photoresistor
-	// channel 2: joystick X
-	// channel 3: joystick Y
+	// channel 1: joystick X
+	// channel 2: joystick Y
 
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 3);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
 
 	while (1)
 	{
@@ -249,11 +248,11 @@ int main(void)
 
 			/* GUI PAGES BEGIN */
 			if(gui_screen_index == 0)
-				draw_joystick_demo(20, 40, adc1_readings[1], adc1_readings[2]);
+				draw_joystick_demo(20, 40, adc1_readings[0], adc1_readings[1]);
 			else if(gui_screen_index == 1)
-				draw_joystick_demo2(20, 40, adc1_readings[1], adc1_readings[2]);
-			else
-				draw_joystick_demo3(20, 40, adc1_readings[1], adc1_readings[2]);
+				draw_joystick_demo2(20, 40, adc1_readings[0], adc1_readings[1]);
+			else if(gui_screen_index == 2)
+				draw_joystick_demo3(20, 40, adc1_readings[0], adc1_readings[1]);
 			/* GUI PAGES END */
 
 			lcd_copy();

@@ -64,6 +64,9 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+static uint32_t GUI_PAGES_COUNT = 3;
+volatile uint32_t gui_screen_index = 0;
+
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi == &hspi2)
@@ -77,7 +80,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	//Next page button
 	if (GPIO_Pin == BTN1_IN_Pin) {
+		//circular loop
+		if(gui_screen_index >= GUI_PAGES_COUNT - 1)
+			gui_screen_index = 0;
+		else
+			gui_screen_index++;
+	}
 
+	//Previous page button
+	if (GPIO_Pin == BTN2_IN_Pin) {
+		//circular loop
+		if(gui_screen_index == 0)
+			gui_screen_index = GUI_PAGES_COUNT - 1;
+		else
+			gui_screen_index--;
 	}
 }
 
@@ -119,7 +135,6 @@ void draw_joystick_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc
 		uint16_t adc_reading_y)
 {
 
-
 	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
 	uint8_t dot_y = map_adc_values(adc_reading_y, top_bar_height + 1, LCD_HEIGHT);
 
@@ -128,6 +143,44 @@ void draw_joystick_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc
 
 	// draw red dot based on ADC1 joystick input
 	hagl_fill_circle(dot_x, dot_y, 5, RED);
+
+	// draw section above "dot area" displaying ADC values as text
+	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, top_bar_height, GREEN);
+	draw_number_as_text(adc_reading_x, 80, 25);
+	draw_number_as_text(adc_reading_y, 120, 25);
+}
+
+void draw_joystick_demo2(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
+		uint16_t adc_reading_y)
+{
+
+	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
+	uint8_t dot_y = map_adc_values(adc_reading_y, top_bar_height + 1, LCD_HEIGHT);
+
+	// draw "dot area" background
+	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, YELLOW);
+
+	// draw red dot based on ADC1 joystick input
+	hagl_fill_circle(dot_x, dot_y, 5, BLUE);
+
+	// draw section above "dot area" displaying ADC values as text
+	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, top_bar_height, GREEN);
+	draw_number_as_text(adc_reading_x, 80, 25);
+	draw_number_as_text(adc_reading_y, 120, 25);
+}
+
+void draw_joystick_demo3(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
+		uint16_t adc_reading_y)
+{
+
+	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
+	uint8_t dot_y = map_adc_values(adc_reading_y, top_bar_height + 1, LCD_HEIGHT);
+
+	// draw "dot area" background
+	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, YELLOW);
+
+	// draw red dot based on ADC1 joystick input
+	hagl_fill_circle(dot_x, dot_y, 5, GREEN);
 
 	// draw section above "dot area" displaying ADC values as text
 	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, top_bar_height, GREEN);
@@ -195,7 +248,12 @@ int main(void)
 			draw_menu_top_bar(20);
 
 			/* GUI PAGES BEGIN */
-			draw_joystick_demo(20, 40, adc1_readings[1], adc1_readings[2]);
+			if(gui_screen_index == 0)
+				draw_joystick_demo(20, 40, adc1_readings[1], adc1_readings[2]);
+			else if(gui_screen_index == 1)
+				draw_joystick_demo2(20, 40, adc1_readings[1], adc1_readings[2]);
+			else
+				draw_joystick_demo3(20, 40, adc1_readings[1], adc1_readings[2]);
 			/* GUI PAGES END */
 
 			lcd_copy();

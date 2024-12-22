@@ -97,18 +97,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
-void draw_text(uint32_t number_input, int16_t x0, int16_t y0)
-{
-	wchar_t text_buffer[5];
-	swprintf(text_buffer, 5, L"%d", number_input);
-	hagl_put_text(text_buffer, x0, y0, YELLOW, font6x9);
-}
-
-
 void draw_number_as_text(uint32_t number_input, int16_t x0, int16_t y0)
 {
-	wchar_t text_buffer[5];
-	swprintf(text_buffer, 5, L"%d", number_input);
+	// max uint32_t is 10 digits
+	wchar_t text_buffer[11];
+	swprintf(text_buffer, 11, L"%d", number_input);
 	hagl_put_text(text_buffer, x0, y0, YELLOW, font6x9);
 }
 
@@ -150,23 +143,13 @@ void draw_joystick_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc
 	draw_number_as_text(adc_reading_y, 120, 25);
 }
 
-void draw_joystick_demo2(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
-		uint16_t adc_reading_y)
+void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t distance_reading)
 {
-
-	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
-	uint8_t dot_y = map_adc_values(adc_reading_y, top_bar_height + 1, LCD_HEIGHT);
-
-	// draw "dot area" background
-	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, YELLOW);
-
-	// draw red dot based on ADC1 joystick input
-	hagl_fill_circle(dot_x, dot_y, 5, BLUE);
-
-	// draw section above "dot area" displaying ADC values as text
-	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, top_bar_height, GREEN);
-	draw_number_as_text(adc_reading_x, 80, 25);
-	draw_number_as_text(adc_reading_y, 120, 25);
+	// draw background
+	hagl_fill_rectangle(0, 20, LCD_WIDTH, LCD_HEIGHT, BLUE);
+	hagl_fill_rectangle(5, 59, LCD_WIDTH - 5, 89, WHITE);
+	hagl_fill_rectangle(15, 69, LCD_WIDTH - 15, 79, BLACK);
+	hagl_fill_rectangle(15, 69, 60, 79, RED);
 }
 
 void draw_joystick_demo3(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
@@ -250,7 +233,7 @@ int main(void)
 			if(gui_screen_index == 0)
 				draw_joystick_demo(20, 40, adc1_readings[0], adc1_readings[1]);
 			else if(gui_screen_index == 1)
-				draw_joystick_demo2(20, 40, adc1_readings[0], adc1_readings[1]);
+				draw_distance_sensor_demo(20, 40, 50);
 			else if(gui_screen_index == 2)
 				draw_joystick_demo3(20, 40, adc1_readings[0], adc1_readings[1]);
 			/* GUI PAGES END */

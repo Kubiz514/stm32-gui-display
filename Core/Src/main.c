@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "dma.h"
 #include "spi.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -30,6 +31,7 @@
 #include "rgb565.h"
 #include <wchar.h>
 #include <string.h>
+#include <stdio.h>
 #include "math_utils.h"
 
 /* USER CODE END Includes */
@@ -67,6 +69,8 @@ void SystemClock_Config(void);
 static uint32_t GUI_PAGES_COUNT = 3;
 volatile uint32_t gui_screen_index = 0;
 
+// interrupts
+
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi == &hspi2)
@@ -96,6 +100,50 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			gui_screen_index--;
 	}
 }
+
+typedef enum {
+	MESSAGE_1,
+	MESSAGE_2,
+	DONE
+}sender_state;
+
+sender_state message_state = MESSAGE_1;
+
+void send_next_message(void)
+{
+  static char message[] = "Hello World!\r\n";
+  static char message2[] = "Second hello world!\r\n";
+
+  switch (message_state)
+  {
+  case 0:
+    if (HAL_UART_Transmit_IT(&huart2, (uint8_t*)message, strlen(message)) != HAL_OK)
+    {
+    	Error_Handler();
+    }
+    message_state = MESSAGE_2;
+    break;
+  case 1:
+    if (HAL_UART_Transmit_IT(&huart2, (uint8_t*)message2, strlen(message2)) != HAL_OK)
+	{
+    	Error_Handler();
+	}
+    message_state = DONE;
+    break;
+  default:
+    break;
+  }
+
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart == &huart2) {
+    send_next_message();
+  }
+}
+
+// program logic
 
 void draw_number_as_text(uint32_t number_input, int16_t x0, int16_t y0)
 {
@@ -171,6 +219,14 @@ void draw_joystick_demo3(uint8_t top_offset, uint8_t top_bar_height, uint16_t ad
 	draw_number_as_text(adc_reading_y, 120, 25);
 }
 
+void send_distance_sensor_data(void)
+{
+	char message[] = "Hello World!\r\n";
+	if (HAL_UART_Transmit_IT(&huart2, (uint8_t*)message, strlen(message)) != HAL_OK) {
+	  Error_Handler();
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -204,6 +260,7 @@ int main(void)
   MX_DMA_Init();
   MX_SPI2_Init();
   MX_ADC1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -221,6 +278,9 @@ int main(void)
 
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
+
+	// send_distance_sensor_data();
+	send_next_message();
 
 	while (1)
 	{

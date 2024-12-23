@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "dma.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -145,6 +146,17 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 // program logic
 
+int __io_putchar(int ch)
+{
+    if (ch == '\n') {
+        uint8_t ch2 = '\r';
+        HAL_UART_Transmit(&huart2, &ch2, 1, HAL_MAX_DELAY);
+    }
+
+    HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
+    return 1;
+}
+
 void draw_number_as_text(uint32_t number_input, int16_t x0, int16_t y0)
 {
 	// max uint32_t is 10 digits
@@ -261,12 +273,17 @@ int main(void)
   MX_SPI2_Init();
   MX_ADC1_Init();
   MX_USART2_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+  HAL_Delay(1000);
 	lcd_init();
 
 	// setup joystick demo
@@ -284,6 +301,11 @@ int main(void)
 
 	while (1)
 	{
+		uint32_t start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
+		uint32_t stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
+		printf("%.1f cm\n", (stop - start) / 1.0f);
+		HAL_Delay(1000);
+
 		// update screen
 		if (!lcd_is_busy())
 		{

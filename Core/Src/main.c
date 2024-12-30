@@ -205,11 +205,26 @@ void draw_joystick_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc
 
 void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t distance_reading)
 {
+	const uint16_t MAX_VALID_DISTANCE = 94;
+	const uint16_t DISTANCE_BAR_BORDER = 15;
+
 	// draw background
 	hagl_fill_rectangle(0, 20, LCD_WIDTH, LCD_HEIGHT, BLUE);
+
+	// todo add method which draws rectangle border, or just clean up magic numbers
+	// draw distance bar
 	hagl_fill_rectangle(5, 59, LCD_WIDTH - 5, 89, WHITE);
-	hagl_fill_rectangle(15, 69, LCD_WIDTH - 15, 79, BLACK);
-	hagl_fill_rectangle(15, 69, 60, 79, RED);
+	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, LCD_WIDTH - DISTANCE_BAR_BORDER, 79, BLACK);
+
+	// cap incorrect reading at max
+	if(distance_reading > MAX_VALID_DISTANCE)
+	{
+		distance_reading = MAX_VALID_DISTANCE;
+	}
+
+	// todo make sure int32 is mapped onto int 16 correctly
+	int16_t distance_mapped_onto_x = (int16_t)map_ranges((int32_t)distance_reading, 0, MAX_VALID_DISTANCE, DISTANCE_BAR_BORDER, LCD_WIDTH - 30);
+	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, distance_mapped_onto_x, 79, RED);
 }
 
 void draw_joystick_demo3(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
@@ -305,7 +320,7 @@ int main(void)
 			if(gui_screen_index == 0)
 				draw_joystick_demo(20, 40, adc1_readings[0], adc1_readings[1]);
 			else if(gui_screen_index == 1)
-				draw_distance_sensor_demo(20, 40, 50);
+				draw_distance_sensor_demo(20, 40, (uint16_t)(stop - start));
 			else if(gui_screen_index == 2)
 				draw_joystick_demo3(20, 40, adc1_readings[0], adc1_readings[1]);
 			/* GUI PAGES END */

@@ -307,10 +307,6 @@ int main(void)
 
 	while (1)
 	{
-		uint32_t start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
-		uint32_t stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
-		printf("%.1f cm\n", (stop - start) / 1.0f);
-
 		// update screen
 		if (!lcd_is_busy())
 		{
@@ -318,11 +314,19 @@ int main(void)
 
 			/* GUI PAGES BEGIN */
 			if(gui_screen_index == 0)
+			{
 				draw_joystick_demo(20, 40, adc1_readings[0], adc1_readings[1]);
+			}
 			else if(gui_screen_index == 1)
+			{
+				uint32_t start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
+				uint32_t stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
 				draw_distance_sensor_demo(20, 40, (uint16_t)(stop - start));
+			}
 			else if(gui_screen_index == 2)
+			{
 				draw_joystick_demo3(20, 40, adc1_readings[0], adc1_readings[1]);
+			}
 			/* GUI PAGES END */
 
 			lcd_copy();

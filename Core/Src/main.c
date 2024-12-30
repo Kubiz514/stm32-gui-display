@@ -231,14 +231,6 @@ void draw_joystick_demo3(uint8_t top_offset, uint8_t top_bar_height, uint16_t ad
 	draw_number_as_text(adc_reading_y, 120, 25);
 }
 
-void send_distance_sensor_data(void)
-{
-	char message[] = "Hello World!\r\n";
-	if (HAL_UART_Transmit_IT(&huart2, (uint8_t*)message, strlen(message)) != HAL_OK) {
-	  Error_Handler();
-	}
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -296,7 +288,6 @@ int main(void)
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
 
-	// send_distance_sensor_data();
 	send_next_message();
 
 	while (1)
@@ -304,7 +295,6 @@ int main(void)
 		uint32_t start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
 		uint32_t stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
 		printf("%.1f cm\n", (stop - start) / 1.0f);
-		HAL_Delay(1000);
 
 		// update screen
 		if (!lcd_is_busy())

@@ -70,6 +70,8 @@ void SystemClock_Config(void);
 static uint32_t GUI_PAGES_COUNT = 3;
 volatile uint32_t gui_screen_index = 0;
 
+volatile bool are_buttons_debounced = true;
+
 // interrupts
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
@@ -80,25 +82,46 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	}
 }
 
+// timer for button debounce
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(HAL_GPIO_ReadPin(BTN1_IN_GPIO_Port, BTN1_IN_Pin) == GPIO_PIN_RESET ||
+	   HAL_GPIO_ReadPin(BTN2_IN_GPIO_Port, BTN2_IN_Pin) == GPIO_PIN_RESET){
+		are_buttons_debounced = true;
+		HAL_TIM_Base_Stop_IT(&htim1);
+	}
+}
+
 //Button interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	//Next page button
-	if (GPIO_Pin == BTN1_IN_Pin) {
-		//circular loop
-		if(gui_screen_index >= GUI_PAGES_COUNT - 1)
-			gui_screen_index = 0;
-		else
-			gui_screen_index++;
-	}
+	if(are_buttons_debounced)
+	{
+		//Next page button
+		if (GPIO_Pin == BTN1_IN_Pin)
+		{
+			//circular loop
+			if(gui_screen_index >= GUI_PAGES_COUNT - 1)
+				gui_screen_index = 0;
+			else
+				gui_screen_index++;
 
-	//Previous page button
-	if (GPIO_Pin == BTN2_IN_Pin) {
-		//circular loop
-		if(gui_screen_index == 0)
-			gui_screen_index = GUI_PAGES_COUNT - 1;
-		else
-			gui_screen_index--;
+			HAL_TIM_Base_Start_IT(&htim1);
+			are_buttons_debounced = false;
+		}
+
+		//Previous page button
+		if (GPIO_Pin == BTN2_IN_Pin)
+		{
+			//circular loop
+			if(gui_screen_index <= 0)
+				gui_screen_index = GUI_PAGES_COUNT - 1;
+			else
+				gui_screen_index--;
+
+			HAL_TIM_Base_Start_IT(&htim1);
+			are_buttons_debounced = false;
+		}
 	}
 }
 
@@ -281,6 +304,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   MX_TIM3_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

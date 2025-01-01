@@ -96,7 +96,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	  if (htim == &htim17)
 	  {
-		  char message[] = "Render timer MAX at 6 ms\r\n";
+		  char message[] = "Render timer MAX at 6 s\r\n";
 			HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 100);
 	  }
 }
@@ -321,11 +321,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  // init distance sensor timer channels
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   HAL_Delay(1000);
-	lcd_init();
+  lcd_init();
 
 	// setup joystick demo
 	volatile static uint16_t adc1_readings[2];

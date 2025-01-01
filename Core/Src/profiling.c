@@ -6,12 +6,14 @@ void init_profiling_timers(void)
 {
 	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 	{
-		HAL_TIM_Base_Start_IT(&htim16);
+		if(HAL_TIM_Base_Start_IT(&htim16) != HAL_OK)
+			Error_Handler();
 	}
 
 	if(IS_RENDER_PROFILING_ENABLED)
 	{
-		HAL_TIM_Base_Start_IT(&htim17);
+		if(HAL_TIM_Base_Start_IT(&htim17) != HAL_OK)
+			Error_Handler();
 	}
 }
 

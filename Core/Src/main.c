@@ -145,7 +145,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			else
 				gui_screen_index--;
 
-			HAL_TIM_Base_Start_IT(&htim1);
+			if(HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
+				Error_Handler();
 			are_buttons_debounced = false;
 		}
 	}
@@ -158,10 +159,12 @@ int __io_putchar(int character)
 	if (character == '\n')
 	{
 		uint8_t inserted_carriage_return = '\r';
-		HAL_UART_Transmit(&huart2, &inserted_carriage_return, 1, HAL_MAX_DELAY);
+		if(HAL_UART_Transmit(&huart2, &inserted_carriage_return, 1, HAL_MAX_DELAY) != HAL_OK)
+			Error_Handler();
 	}
 
-	HAL_UART_Transmit(&huart2, (uint8_t*)&character, 1, HAL_MAX_DELAY);
+	if(HAL_UART_Transmit(&huart2, (uint8_t*)&character, 1, HAL_MAX_DELAY) != HAL_OK)
+		Error_Handler();
 	return 1;
 }
 
@@ -211,9 +214,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
 	// init distance sensor timer channels
-	HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
-	HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	if(HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1) != HAL_OK)
+		Error_Handler();
+	if(HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2) != HAL_OK)
+		Error_Handler();
+	if(HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3) != HAL_OK)
+		Error_Handler();
 
 	// initialize lcd
 	HAL_Delay(1000);
@@ -229,8 +235,10 @@ int main(void)
 	// channel 1: joystick X
 	// channel 2: joystick Y
 
-	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
+	if(HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
+		Error_Handler();
+	if(HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2) != HAL_OK)
+		Error_Handler();
 
 	init_profiling_timers();
 

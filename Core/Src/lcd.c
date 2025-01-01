@@ -36,7 +36,8 @@ static void lcd_transmit_cmd(uint8_t cmd)
 {
 	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
+	if(HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY) != HAL_OK)
+		Error_Handler();
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
 }
 
@@ -44,7 +45,8 @@ static void lcd_transmit_data(uint8_t data)
 {
 	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi2, &data, 1, HAL_MAX_DELAY);
+	if(HAL_SPI_Transmit(&hspi2, &data, 1, HAL_MAX_DELAY) != HAL_OK)
+		Error_Handler();
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
 }
 
@@ -134,7 +136,8 @@ void lcd_copy_data(void)
 	// pins required for SPI data transmission
 	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit_DMA(&hspi2, (uint8_t*)pixels_buffer, sizeof(pixels_buffer));
+	if(HAL_SPI_Transmit_DMA(&hspi2, (uint8_t*)pixels_buffer, sizeof(pixels_buffer)) != HAL_OK)
+		Error_Handler();
 }
 
 void lcd_data_transmit_done(void)

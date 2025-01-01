@@ -69,6 +69,12 @@ void SystemClock_Config(void);
 
 static uint32_t GUI_PAGES_COUNT = 3;
 volatile uint32_t gui_screen_index = 0;
+typedef enum {
+  JOYSTICK_DEMO,
+  DISTANCE_SENSOR_DEMO,
+  STATIC_SCREEN_DEMO
+}gui_page;
+
 
 volatile bool are_buttons_debounced = true;
 static bool IS_RENDER_PROFILING_ENABLED = true;
@@ -174,7 +180,7 @@ int32_t map_adc_values(int32_t input_value, int32_t min_output,
 	return map_ranges(input_value, 0, 4095, min_output, max_output);
 }
 
-void draw_menu_top_bar(uint8_t menu_bar_height)
+void draw_top_bar(uint8_t menu_bar_height)
 {
 	// draw menu background
 	hagl_fill_rectangle(0, 0, LCD_WIDTH, menu_bar_height, BLACK);
@@ -186,26 +192,26 @@ void draw_menu_top_bar(uint8_t menu_bar_height)
 	hagl_fill_triangle(130, 5, 130, 15, 150, 10, RED);
 }
 
-void draw_joystick_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
+void draw_joystick_demo(uint8_t top_offset, uint8_t TOP_BAR_HEIGHT, uint16_t adc_reading_x,
 		uint16_t adc_reading_y)
 {
 
 	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
-	uint8_t dot_y = map_adc_values(adc_reading_y, top_bar_height + 1, LCD_HEIGHT);
+	uint8_t dot_y = map_adc_values(adc_reading_y, TOP_BAR_HEIGHT + 1, LCD_HEIGHT);
 
 	// draw "dot area" background
-	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, YELLOW);
+	hagl_fill_rectangle(0, TOP_BAR_HEIGHT, LCD_WIDTH, LCD_HEIGHT, YELLOW);
 
 	// draw red dot based on ADC1 joystick input
 	hagl_fill_circle(dot_x, dot_y, 5, RED);
 
 	// draw section above "dot area" displaying ADC values as text
-	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, top_bar_height, GREEN);
+	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, TOP_BAR_HEIGHT, GREEN);
 	draw_number_as_text(adc_reading_x, 80, 25);
 	draw_number_as_text(adc_reading_y, 120, 25);
 }
 
-void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint16_t distance_reading)
+void draw_distance_sensor_demo(uint8_t top_offset, uint8_t TOP_BAR_HEIGHT, uint16_t distance_reading)
 {
 	const uint16_t MAX_VALID_DISTANCE = 94;
 	const uint16_t DISTANCE_BAR_BORDER = 15;
@@ -229,9 +235,9 @@ void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint1
 	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, distance_mapped_onto_x, 79, RED);
 }
 
-void draw_text_and_shapes_demo(uint8_t top_bar_height)
+void draw_text_and_shapes_demo(uint8_t TOP_BAR_HEIGHT)
 {
-	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, BLACK);
+	hagl_fill_rectangle(0, TOP_BAR_HEIGHT, LCD_WIDTH, LCD_HEIGHT, BLACK);
 	hagl_fill_circle(30, 50, 10, GREEN);
 	hagl_fill_rectangle(70, 40, 90, 60, RED);
 	int16_t vertices[6] = {120, 60, 130, 40, 140, 60};
@@ -295,6 +301,8 @@ int main(void)
   HAL_Delay(1000);
   lcd_init();
 
+  static uint8_t TOP_BAR_HEIGHT = 20;
+
 	// setup joystick demo
 	volatile static uint16_t adc1_readings[2];
 
@@ -330,20 +338,20 @@ int main(void)
 				__HAL_TIM_SET_COUNTER(&htim17, 0);
 			}
 
-			draw_menu_top_bar(20);
+			draw_top_bar(TOP_BAR_HEIGHT);
 
 			/* GUI PAGES BEGIN */
-			if(gui_screen_index == 0)
+			if(gui_screen_index == JOYSTICK_DEMO)
 			{
-				draw_joystick_demo(20, 40, adc1_readings[0], adc1_readings[1]);
+				draw_joystick_demo(TOP_BAR_HEIGHT, 40, adc1_readings[0], adc1_readings[1]);
 			}
-			else if(gui_screen_index == 1)
+			else if(gui_screen_index == DISTANCE_SENSOR_DEMO)
 			{
-				draw_distance_sensor_demo(20, 40, (uint16_t)(distance_sensor_stop - distance_sensor_start));
+				draw_distance_sensor_demo(TOP_BAR_HEIGHT, 40, (uint16_t)(distance_sensor_stop - distance_sensor_start));
 			}
-			else if(gui_screen_index == 2)
+			else if(gui_screen_index == STATIC_SCREEN_DEMO)
 			{
-				draw_text_and_shapes_demo(20);
+				draw_text_and_shapes_demo(TOP_BAR_HEIGHT);
 			}
 			/* GUI PAGES END */
 

@@ -84,12 +84,8 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 
 		if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 		{
-			char uart_buf[50];
-			volatile int uart_buf_len;
-
 			uint16_t lcd_transfer_time = __HAL_TIM_GET_COUNTER(&htim16);
-			uart_buf_len = sprintf(uart_buf, "%.1f ms\r\n", ((float)lcd_transfer_time)/10);
-			HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
+			printf("lcd data transfer: %.1f ms\r\n", (float)lcd_transfer_time/10);
 		}
 	}
 }
@@ -108,14 +104,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	  if (htim == &htim16)
 	  {
-		  char message[] = "LCD data transfer timer MAX at 6 s\r\n";
-			HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 100);
+		  printf("LCD data transfer timer MAX at 6 s\r\n");
 	  }
 
 	  if (htim == &htim17)
 	  {
-		  char message[] = "Render timer MAX at 6 s\r\n";
-			HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 100);
+		  printf("Render timer MAX at 6 s\r\n");
 	  }
 }
 
@@ -309,9 +303,6 @@ int main(void)
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
 
-	char uart_buf[50];
-	volatile int uart_buf_len;
-
 	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 	{
 		HAL_TIM_Base_Start_IT(&htim16);
@@ -355,8 +346,7 @@ int main(void)
 			if(IS_RENDER_PROFILING_ENABLED)
 			{
 				uint16_t render_time = __HAL_TIM_GET_COUNTER(&htim17);
-				uart_buf_len = sprintf(uart_buf, "%.1f ms\r\n", ((float)render_time)/10);
-				HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
+				printf("render: %.1f ms\r\n", (float)render_time/10);
 			}
 
 			lcd_copy();

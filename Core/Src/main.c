@@ -152,48 +152,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
-typedef enum {
-	MESSAGE_1,
-	MESSAGE_2,
-	DONE
-}sender_state;
-
-sender_state message_state = MESSAGE_1;
-
-void send_next_message(void)
-{
-  static char message[] = "Hello World!\r\n";
-  static char message2[] = "Second hello world!\r\n";
-
-  switch (message_state)
-  {
-  case 0:
-    if (HAL_UART_Transmit_IT(&huart2, (uint8_t*)message, strlen(message)) != HAL_OK)
-    {
-    	Error_Handler();
-    }
-    message_state = MESSAGE_2;
-    break;
-  case 1:
-    if (HAL_UART_Transmit_IT(&huart2, (uint8_t*)message2, strlen(message2)) != HAL_OK)
-	{
-    	Error_Handler();
-	}
-    message_state = DONE;
-    break;
-  default:
-    break;
-  }
-
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if (huart == &huart2) {
-    send_next_message();
-  }
-}
-
 // program logic
 
 int __io_putchar(int ch)
@@ -350,8 +308,6 @@ int main(void)
 
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
-
-	send_next_message();
 
 	char uart_buf[50];
 	volatile int uart_buf_len;

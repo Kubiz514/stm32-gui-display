@@ -71,8 +71,8 @@ static uint32_t GUI_PAGES_COUNT = 3;
 volatile uint32_t gui_screen_index = 0;
 
 volatile bool are_buttons_debounced = true;
-static bool IS_RENDER_PROFILING_ENABLED = false;
-static bool IS_LCD_TRANSFER_PROFILING_ENABLED = false;
+static bool IS_RENDER_PROFILING_ENABLED = true;
+static bool IS_LCD_TRANSFER_PROFILING_ENABLED = true;
 
 // interrupts
 
@@ -277,23 +277,16 @@ void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint1
 	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, distance_mapped_onto_x, 79, RED);
 }
 
-void draw_joystick_demo3(uint8_t top_offset, uint8_t top_bar_height, uint16_t adc_reading_x,
-		uint16_t adc_reading_y)
+void draw_text_and_shapes_demo(uint8_t top_bar_height)
 {
+	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, BLACK);
+	hagl_fill_circle(30, 50, 10, GREEN);
+	hagl_fill_rectangle(70, 40, 90, 60, RED);
+	int16_t vertices[6] = {120, 60, 130, 40, 140, 60};
+	hagl_fill_polygon(3, vertices, CYAN);
 
-	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
-	uint8_t dot_y = map_adc_values(adc_reading_y, top_bar_height + 1, LCD_HEIGHT);
-
-	// draw "dot area" background
-	hagl_fill_rectangle(0, top_bar_height, LCD_WIDTH, LCD_HEIGHT, YELLOW);
-
-	// draw red dot based on ADC1 joystick input
-	hagl_fill_circle(dot_x, dot_y, 5, GREEN);
-
-	// draw section above "dot area" displaying ADC values as text
-	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, top_bar_height, GREEN);
-	draw_number_as_text(adc_reading_x, 80, 25);
-	draw_number_as_text(adc_reading_y, 120, 25);
+	hagl_put_text(L"The quick brown fox", 20, 80, YELLOW, font6x9);
+	hagl_put_text(L"jumps over the lazy dog", 20, 100, YELLOW, font6x9);
 }
 
 /* USER CODE END 0 */
@@ -375,6 +368,9 @@ int main(void)
 
 	while (1)
 	{
+		uint32_t distance_sensor_start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
+		uint32_t distance_sensor_stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
+
 		// update screen
 		if (!lcd_is_busy())
 		{
@@ -392,13 +388,11 @@ int main(void)
 			}
 			else if(gui_screen_index == 1)
 			{
-				uint32_t start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
-				uint32_t stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
-				draw_distance_sensor_demo(20, 40, (uint16_t)(stop - start));
+				draw_distance_sensor_demo(20, 40, (uint16_t)(distance_sensor_stop - distance_sensor_start));
 			}
 			else if(gui_screen_index == 2)
 			{
-				draw_joystick_demo3(20, 40, adc1_readings[0], adc1_readings[1]);
+				draw_text_and_shapes_demo(20);
 			}
 			/* GUI PAGES END */
 

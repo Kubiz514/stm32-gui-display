@@ -290,6 +290,8 @@ int main(void)
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+
+  // initialize lcd
   HAL_Delay(1000);
   lcd_init();
 
@@ -303,6 +305,7 @@ int main(void)
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
 
+	// start profiling timers
 	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 	{
 		HAL_TIM_Base_Start_IT(&htim16);
@@ -315,6 +318,7 @@ int main(void)
 
 	while (1)
 	{
+		// read distance sensor
 		uint32_t distance_sensor_start = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);
 		uint32_t distance_sensor_stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
 

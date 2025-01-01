@@ -17,7 +17,7 @@
 #define WHITE			0xffff
 
 void lcd_init(void);
-void lcd_put_pixel(int x, int y, uint16_t color);
-void lcd_copy(void);
-void lcd_transfer_done(void);
-bool lcd_is_busy(void);
+void set_pixel_in_buffer(int x, int y, uint16_t color);
+void lcd_transmit_data(void);
+void lcd_data_transmit_done(void);
+bool is_lcd_data_being_transmitted(void);

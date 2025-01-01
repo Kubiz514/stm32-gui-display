@@ -86,7 +86,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi == &hspi2)
 	{
-		lcd_transfer_done();
+		lcd_data_transmit_done();
 
 		if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 		{
@@ -96,7 +96,6 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	}
 }
 
-// timer for button debounce
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim == &htim1)
@@ -119,7 +118,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  }
 }
 
-//Button interrupt
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(are_buttons_debounced)
@@ -179,6 +177,8 @@ int32_t map_adc_values(int32_t input_value, int32_t min_output,
 	// ADC values range from 0 to 4095
 	return map_ranges(input_value, 0, 4095, min_output, max_output);
 }
+
+// GUI elements
 
 void draw_top_bar(uint8_t menu_bar_height)
 {
@@ -301,6 +301,7 @@ int main(void)
   HAL_Delay(1000);
   lcd_init();
 
+  // setup GUI
   static uint8_t TOP_BAR_HEIGHT = 20;
 
 	// setup joystick demo
@@ -331,7 +332,7 @@ int main(void)
 		uint32_t distance_sensor_stop = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
 
 		// update screen
-		if (!lcd_is_busy())
+		if (!is_lcd_data_being_transmitted())
 		{
 			if(IS_RENDER_PROFILING_ENABLED)
 			{
@@ -361,7 +362,8 @@ int main(void)
 				printf("render: %.1f ms\r\n", (float)render_time/10);
 			}
 
-			lcd_copy();
+			lcd_transmit_data();
+
 			if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 			{
 				__HAL_TIM_SET_COUNTER(&htim16, 0);

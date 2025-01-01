@@ -28,7 +28,7 @@
 #define LCD_OFFSET_Y  2
 #define CMD(x)			((x) | 0x100)
 
-static uint16_t frame_buffer[LCD_WIDTH * LCD_HEIGHT];
+static uint16_t pixels_buffer[LCD_WIDTH * LCD_HEIGHT];
 
 static void lcd_cmd(uint8_t cmd)
 {
@@ -115,30 +115,35 @@ static void lcd_set_window(int x, int y, int width, int height)
 }
 
 
-void lcd_put_pixel(int x, int y, uint16_t color)
+void set_pixel_in_buffer(int x, int y, uint16_t color)
 {
-  frame_buffer[x + y * LCD_WIDTH] = color;
+	pixels_buffer[x + y * LCD_WIDTH] = color;
 }
 
-void lcd_copy(void)
+void lcd_transmit_data(void)
 {
-
 	lcd_set_window(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	lcd_cmd(ST7735S_RAMWR);
+
+	// pins required for SPI data transmission
 	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit_DMA(&hspi2, (uint8_t*)frame_buffer, sizeof(frame_buffer));
+	HAL_SPI_Transmit_DMA(&hspi2, (uint8_t*)pixels_buffer, sizeof(pixels_buffer));
 }
 
-void lcd_transfer_done(void)
+void lcd_data_transmit_done(void)
 {
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
 }
 
-bool lcd_is_busy(void)
+bool is_lcd_data_being_transmitted(void)
 {
 	if (HAL_GPIO_ReadPin(LCD_CS_GPIO_Port, LCD_CS_Pin) == GPIO_PIN_RESET)
+	{
 		return true;
+	}
 	else
+	{
 		return false;
+	}
 }

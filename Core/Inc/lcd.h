@@ -18,6 +18,6 @@
 
 void lcd_init(void);
 void set_pixel_in_buffer(int x, int y, uint16_t color);
-void lcd_transmit_data(void);
+void lcd_copy_data(void);
 void lcd_data_transmit_done(void);
 bool is_lcd_data_being_transmitted(void);

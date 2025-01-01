@@ -68,13 +68,12 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 static uint32_t GUI_PAGES_COUNT = 3;
-volatile uint32_t gui_screen_index = 0;
 typedef enum {
   JOYSTICK_DEMO,
   DISTANCE_SENSOR_DEMO,
   STATIC_SCREEN_DEMO
 }gui_page;
-
+volatile uint32_t gui_screen_index = 0;
 
 volatile bool are_buttons_debounced = true;
 static bool IS_RENDER_PROFILING_ENABLED = true;
@@ -101,21 +100,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim == &htim1)
 	{
 		if(HAL_GPIO_ReadPin(BTN1_IN_GPIO_Port, BTN1_IN_Pin) == GPIO_PIN_RESET ||
-		   HAL_GPIO_ReadPin(BTN2_IN_GPIO_Port, BTN2_IN_Pin) == GPIO_PIN_RESET){
+		   HAL_GPIO_ReadPin(BTN2_IN_GPIO_Port, BTN2_IN_Pin) == GPIO_PIN_RESET)
+		{
 			are_buttons_debounced = true;
 			HAL_TIM_Base_Stop_IT(&htim1);
 		}
 	}
 
-	  if (htim == &htim16)
-	  {
-		  printf("LCD data transfer timer MAX at 6 s\r\n");
-	  }
+	if (htim == &htim16)
+	{
+	  printf("LCD data transfer timer MAX at 6 s\r\n");
+	}
 
-	  if (htim == &htim17)
-	  {
-		  printf("Render timer MAX at 6 s\r\n");
-	  }
+	if (htim == &htim17)
+	{
+	  printf("Render timer MAX at 6 s\r\n");
+	}
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -152,15 +152,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 // program logic
 
-int __io_putchar(int ch)
+int __io_putchar(int character)
 {
-    if (ch == '\n') {
-        uint8_t ch2 = '\r';
-        HAL_UART_Transmit(&huart2, &ch2, 1, HAL_MAX_DELAY);
-    }
+	if (character == '\n')
+	{
+		uint8_t inserted_carriage_return = '\r';
+		HAL_UART_Transmit(&huart2, &inserted_carriage_return, 1, HAL_MAX_DELAY);
+	}
 
-    HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
-    return 1;
+	HAL_UART_Transmit(&huart2, (uint8_t*)&character, 1, HAL_MAX_DELAY);
+	return 1;
 }
 
 void draw_number_as_text(uint32_t number_input, int16_t x0, int16_t y0)
@@ -292,17 +293,17 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  // init distance sensor timer channels
-  HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	// init distance sensor timer channels
+	HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 
-  // initialize lcd
-  HAL_Delay(1000);
-  lcd_init();
+	// initialize lcd
+	HAL_Delay(1000);
+	lcd_init();
 
-  // setup GUI
-  static uint8_t TOP_BAR_HEIGHT = 20;
+	// setup GUI
+	static uint8_t TOP_BAR_HEIGHT = 20;
 
 	// setup joystick demo
 	volatile static uint16_t adc1_readings[2];
@@ -362,7 +363,7 @@ int main(void)
 				printf("render: %.1f ms\r\n", (float)render_time/10);
 			}
 
-			lcd_transmit_data();
+			lcd_copy_data();
 
 			if(IS_LCD_TRANSFER_PROFILING_ENABLED)
 			{

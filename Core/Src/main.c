@@ -85,11 +85,20 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 // timer for button debounce
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if(HAL_GPIO_ReadPin(BTN1_IN_GPIO_Port, BTN1_IN_Pin) == GPIO_PIN_RESET ||
-	   HAL_GPIO_ReadPin(BTN2_IN_GPIO_Port, BTN2_IN_Pin) == GPIO_PIN_RESET){
-		are_buttons_debounced = true;
-		HAL_TIM_Base_Stop_IT(&htim1);
+	if (htim == &htim1)
+	{
+		if(HAL_GPIO_ReadPin(BTN1_IN_GPIO_Port, BTN1_IN_Pin) == GPIO_PIN_RESET ||
+		   HAL_GPIO_ReadPin(BTN2_IN_GPIO_Port, BTN2_IN_Pin) == GPIO_PIN_RESET){
+			are_buttons_debounced = true;
+			HAL_TIM_Base_Stop_IT(&htim1);
+		}
 	}
+
+	  if (htim == &htim17)
+	  {
+		  char message[] = "Render timer MAX at 6 ms\r\n";
+			HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 100);
+	  }
 }
 
 //Button interrupt
@@ -305,6 +314,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   MX_TIM1_Init();
+  MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -329,11 +339,27 @@ int main(void)
 
 	send_next_message();
 
+	char uart_buf[50];
+	volatile int uart_buf_len;
+	volatile uint16_t render_time = 0;
+	volatile bool is_render_profiling_enabled = true;
+
+	if(is_render_profiling_enabled)
+	{
+		HAL_TIM_Base_Start_IT(&htim17);
+	}
+
 	while (1)
 	{
 		// update screen
 		if (!lcd_is_busy())
 		{
+			if(is_render_profiling_enabled)
+			{
+				render_time = 0;
+				__HAL_TIM_SET_COUNTER(&htim17, 0);
+			}
+
 			draw_menu_top_bar(20);
 
 			/* GUI PAGES BEGIN */
@@ -353,6 +379,13 @@ int main(void)
 			}
 			/* GUI PAGES END */
 
+			if(is_render_profiling_enabled)
+			{
+				render_time = __HAL_TIM_GET_COUNTER(&htim17);
+			}
+
+			uart_buf_len = sprintf(uart_buf, "%.1f ms\r\n", ((float)render_time)/10);
+			HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
 			lcd_copy();
 		}
 

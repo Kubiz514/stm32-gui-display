@@ -122,6 +122,7 @@ void lcd_put_pixel(int x, int y, uint16_t color)
 
 void lcd_copy(void)
 {
+	// timemeasure: start measuring transmit time here
 	lcd_set_window(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	lcd_cmd(ST7735S_RAMWR);
 	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET);
@@ -132,6 +133,7 @@ void lcd_copy(void)
 void lcd_transfer_done(void)
 {
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
+	// timemeasure: stop measuring transmit time here
 }
 
 bool lcd_is_busy(void)

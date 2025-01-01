@@ -71,6 +71,8 @@ static uint32_t GUI_PAGES_COUNT = 3;
 volatile uint32_t gui_screen_index = 0;
 
 volatile bool are_buttons_debounced = true;
+static bool IS_RENDER_PROFILING_ENABLED = false;
+static bool IS_LCD_TRANSFER_PROFILING_ENABLED = false;
 
 // interrupts
 
@@ -79,6 +81,16 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	if (hspi == &hspi2)
 	{
 		lcd_transfer_done();
+
+		if(IS_LCD_TRANSFER_PROFILING_ENABLED)
+		{
+			char uart_buf[50];
+			volatile int uart_buf_len;
+
+			uint16_t lcd_transfer_time = __HAL_TIM_GET_COUNTER(&htim16);
+			uart_buf_len = sprintf(uart_buf, "%.1f ms\r\n", ((float)lcd_transfer_time)/10);
+			HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
+		}
 	}
 }
 
@@ -93,6 +105,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			HAL_TIM_Base_Stop_IT(&htim1);
 		}
 	}
+
+	  if (htim == &htim16)
+	  {
+		  char message[] = "LCD data transfer timer MAX at 6 s\r\n";
+			HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 100);
+	  }
 
 	  if (htim == &htim17)
 	  {
@@ -315,6 +333,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM1_Init();
   MX_TIM17_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -343,10 +362,13 @@ int main(void)
 
 	char uart_buf[50];
 	volatile int uart_buf_len;
-	volatile uint16_t render_time = 0;
-	volatile bool is_render_profiling_enabled = true;
 
-	if(is_render_profiling_enabled)
+	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
+	{
+		HAL_TIM_Base_Start_IT(&htim16);
+	}
+
+	if(IS_RENDER_PROFILING_ENABLED)
 	{
 		HAL_TIM_Base_Start_IT(&htim17);
 	}
@@ -356,9 +378,8 @@ int main(void)
 		// update screen
 		if (!lcd_is_busy())
 		{
-			if(is_render_profiling_enabled)
+			if(IS_RENDER_PROFILING_ENABLED)
 			{
-				render_time = 0;
 				__HAL_TIM_SET_COUNTER(&htim17, 0);
 			}
 
@@ -381,14 +402,18 @@ int main(void)
 			}
 			/* GUI PAGES END */
 
-			if(is_render_profiling_enabled)
+			if(IS_RENDER_PROFILING_ENABLED)
 			{
-				render_time = __HAL_TIM_GET_COUNTER(&htim17);
+				uint16_t render_time = __HAL_TIM_GET_COUNTER(&htim17);
+				uart_buf_len = sprintf(uart_buf, "%.1f ms\r\n", ((float)render_time)/10);
+				HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
 			}
 
-			uart_buf_len = sprintf(uart_buf, "%.1f ms\r\n", ((float)render_time)/10);
-			HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
 			lcd_copy();
+			if(IS_LCD_TRANSFER_PROFILING_ENABLED)
+			{
+				__HAL_TIM_SET_COUNTER(&htim16, 0);
+			}
 		}
 
     /* USER CODE END WHILE */

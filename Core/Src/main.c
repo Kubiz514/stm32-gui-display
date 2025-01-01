@@ -34,6 +34,7 @@
 #include <stdbool.h>
 #include "lcd.h"
 #include "gui.h"
+#include "profiling.h"
 
 /* USER CODE END Includes */
 
@@ -67,17 +68,19 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+bool IS_RENDER_PROFILING_ENABLED = true;
+bool IS_LCD_TRANSFER_PROFILING_ENABLED = true;
+
 static uint32_t GUI_PAGES_COUNT = 3;
 typedef enum {
   JOYSTICK_DEMO,
   DISTANCE_SENSOR_DEMO,
   STATIC_SCREEN_DEMO
 }gui_page;
+// starting index can be changed here
 volatile uint32_t gui_screen_index = 0;
 
 volatile bool are_buttons_debounced = true;
-static bool IS_RENDER_PROFILING_ENABLED = true;
-static bool IS_LCD_TRANSFER_PROFILING_ENABLED = true;
 
 // interrupts
 
@@ -99,7 +102,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		   HAL_GPIO_ReadPin(BTN2_IN_GPIO_Port, BTN2_IN_Pin) == GPIO_PIN_RESET)
 		{
 			are_buttons_debounced = true;
-			HAL_TIM_Base_Stop_IT(&htim1);
+			if(HAL_TIM_Base_Stop_IT(&htim1) != HAL_OK)
+				Error_Handler();
 		}
 	}
 
@@ -127,7 +131,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			else
 				gui_screen_index++;
 
-			HAL_TIM_Base_Start_IT(&htim1);
+			if(HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
+				Error_Handler();
 			are_buttons_debounced = false;
 		}
 
@@ -158,40 +163,6 @@ int __io_putchar(int character)
 
 	HAL_UART_Transmit(&huart2, (uint8_t*)&character, 1, HAL_MAX_DELAY);
 	return 1;
-}
-
-void start_render_profiling(void)
-{
-	if(IS_RENDER_PROFILING_ENABLED)
-	{
-		__HAL_TIM_SET_COUNTER(&htim17, 0);
-	}
-}
-
-void finish_render_profiling(void)
-{
-	if(IS_RENDER_PROFILING_ENABLED)
-	{
-		uint16_t render_time = __HAL_TIM_GET_COUNTER(&htim17);
-		printf("render: %.1f ms\r\n", (float)render_time/10);
-	}
-}
-
-void start_lcd_data_transfer_profiling(void)
-{
-	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
-	{
-		__HAL_TIM_SET_COUNTER(&htim16, 0);
-	}
-}
-
-void finish_lcd_data_transfer_profiling(void)
-{
-	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
-	{
-		uint16_t lcd_transfer_time = __HAL_TIM_GET_COUNTER(&htim16);
-		printf("lcd data transfer: %.1f ms\r\n", (float)lcd_transfer_time/10);
-	}
 }
 
 /* USER CODE END 0 */
@@ -249,9 +220,9 @@ int main(void)
 	lcd_init();
 
 	// setup GUI
-	static uint8_t TOP_BAR_HEIGHT = 20;
+	uint8_t TOP_BAR_HEIGHT = 20;
 
-	// setup joystick demo
+	// setup joysticks ADC
 	volatile static uint16_t adc1_readings[2];
 
 	// setup ADC1 reading with DMA
@@ -261,16 +232,8 @@ int main(void)
 	HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc1_readings, 2);
 
-	// start profiling timers
-	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
-	{
-		HAL_TIM_Base_Start_IT(&htim16);
-	}
+	init_profiling_timers();
 
-	if(IS_RENDER_PROFILING_ENABLED)
-	{
-		HAL_TIM_Base_Start_IT(&htim17);
-	}
 
 	while (1)
 	{

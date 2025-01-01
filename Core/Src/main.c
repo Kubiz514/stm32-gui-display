@@ -27,13 +27,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hagl.h"
-#include "font6x9.h"
-#include "rgb565.h"
 #include <wchar.h>
 #include <string.h>
 #include <stdio.h>
-#include "math_utils.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "lcd.h"
+#include "gui.h"
 
 /* USER CODE END Includes */
 
@@ -87,11 +87,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	{
 		lcd_data_transmit_done();
 
-		if(IS_LCD_TRANSFER_PROFILING_ENABLED)
-		{
-			uint16_t lcd_transfer_time = __HAL_TIM_GET_COUNTER(&htim16);
-			printf("lcd data transfer: %.1f ms\r\n", (float)lcd_transfer_time/10);
-		}
+		finish_lcd_data_transfer_profiling();
 	}
 }
 
@@ -164,88 +160,38 @@ int __io_putchar(int character)
 	return 1;
 }
 
-void draw_number_as_text(uint32_t number_input, int16_t x0, int16_t y0)
+void start_render_profiling(void)
 {
-	// max uint32_t is 10 digits
-	wchar_t text_buffer[11];
-	swprintf(text_buffer, 11, L"%d", number_input);
-	hagl_put_text(text_buffer, x0, y0, YELLOW, font6x9);
-}
-
-int32_t map_adc_values(int32_t input_value, int32_t min_output,
-		int32_t max_output)
-{
-	// ADC values range from 0 to 4095
-	return map_ranges(input_value, 0, 4095, min_output, max_output);
-}
-
-// GUI elements
-
-void draw_top_bar(uint8_t menu_bar_height)
-{
-	// draw menu background
-	hagl_fill_rectangle(0, 0, LCD_WIDTH, menu_bar_height, BLACK);
-
-	// draw left rectangle
-	hagl_fill_triangle(10, 10, 30, 5, 30, 15, RED);
-
-	// draw right rectangle
-	hagl_fill_triangle(130, 5, 130, 15, 150, 10, RED);
-}
-
-void draw_joystick_demo(uint8_t top_offset, uint8_t TOP_BAR_HEIGHT, uint16_t adc_reading_x,
-		uint16_t adc_reading_y)
-{
-
-	uint8_t dot_x = map_adc_values(adc_reading_x, 0, LCD_WIDTH);
-	uint8_t dot_y = map_adc_values(adc_reading_y, TOP_BAR_HEIGHT + 1, LCD_HEIGHT);
-
-	// draw "dot area" background
-	hagl_fill_rectangle(0, TOP_BAR_HEIGHT, LCD_WIDTH, LCD_HEIGHT, YELLOW);
-
-	// draw red dot based on ADC1 joystick input
-	hagl_fill_circle(dot_x, dot_y, 5, RED);
-
-	// draw section above "dot area" displaying ADC values as text
-	hagl_fill_rectangle(0, top_offset, LCD_WIDTH, TOP_BAR_HEIGHT, GREEN);
-	draw_number_as_text(adc_reading_x, 80, 25);
-	draw_number_as_text(adc_reading_y, 120, 25);
-}
-
-void draw_distance_sensor_demo(uint8_t top_offset, uint8_t TOP_BAR_HEIGHT, uint16_t distance_reading)
-{
-	const uint16_t MAX_VALID_DISTANCE = 94;
-	const uint16_t DISTANCE_BAR_BORDER = 15;
-
-	// draw background
-	hagl_fill_rectangle(0, 20, LCD_WIDTH, LCD_HEIGHT, BLUE);
-
-	// todo add method which draws rectangle border, or just clean up magic numbers
-	// draw distance bar
-	hagl_fill_rectangle(5, 59, LCD_WIDTH - 5, 89, WHITE);
-	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, LCD_WIDTH - DISTANCE_BAR_BORDER, 79, BLACK);
-
-	// cap incorrect reading at max
-	if(distance_reading > MAX_VALID_DISTANCE)
+	if(IS_RENDER_PROFILING_ENABLED)
 	{
-		distance_reading = MAX_VALID_DISTANCE;
+		__HAL_TIM_SET_COUNTER(&htim17, 0);
 	}
-
-	// todo make sure int32 is mapped onto int 16 correctly
-	int16_t distance_mapped_onto_x = (int16_t)map_ranges((int32_t)distance_reading, 0, MAX_VALID_DISTANCE, DISTANCE_BAR_BORDER, LCD_WIDTH - 30);
-	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, distance_mapped_onto_x, 79, RED);
 }
 
-void draw_text_and_shapes_demo(uint8_t TOP_BAR_HEIGHT)
+void finish_render_profiling(void)
 {
-	hagl_fill_rectangle(0, TOP_BAR_HEIGHT, LCD_WIDTH, LCD_HEIGHT, BLACK);
-	hagl_fill_circle(30, 50, 10, GREEN);
-	hagl_fill_rectangle(70, 40, 90, 60, RED);
-	int16_t vertices[6] = {120, 60, 130, 40, 140, 60};
-	hagl_fill_polygon(3, vertices, CYAN);
+	if(IS_RENDER_PROFILING_ENABLED)
+	{
+		uint16_t render_time = __HAL_TIM_GET_COUNTER(&htim17);
+		printf("render: %.1f ms\r\n", (float)render_time/10);
+	}
+}
 
-	hagl_put_text(L"The quick brown fox", 20, 80, YELLOW, font6x9);
-	hagl_put_text(L"jumps over the lazy dog", 20, 100, YELLOW, font6x9);
+void start_lcd_data_transfer_profiling(void)
+{
+	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
+	{
+		__HAL_TIM_SET_COUNTER(&htim16, 0);
+	}
+}
+
+void finish_lcd_data_transfer_profiling(void)
+{
+	if(IS_LCD_TRANSFER_PROFILING_ENABLED)
+	{
+		uint16_t lcd_transfer_time = __HAL_TIM_GET_COUNTER(&htim16);
+		printf("lcd data transfer: %.1f ms\r\n", (float)lcd_transfer_time/10);
+	}
 }
 
 /* USER CODE END 0 */
@@ -335,12 +281,11 @@ int main(void)
 		// update screen
 		if (!is_lcd_data_being_transmitted())
 		{
-			if(IS_RENDER_PROFILING_ENABLED)
-			{
-				__HAL_TIM_SET_COUNTER(&htim17, 0);
-			}
+			start_render_profiling();
 
+			/* CONSISTENT GUI ELEMENTS BEGIN */
 			draw_top_bar(TOP_BAR_HEIGHT);
+			/* CONSISTENT GUI ELEMENTS END */
 
 			/* GUI PAGES BEGIN */
 			if(gui_screen_index == JOYSTICK_DEMO)
@@ -357,18 +302,9 @@ int main(void)
 			}
 			/* GUI PAGES END */
 
-			if(IS_RENDER_PROFILING_ENABLED)
-			{
-				uint16_t render_time = __HAL_TIM_GET_COUNTER(&htim17);
-				printf("render: %.1f ms\r\n", (float)render_time/10);
-			}
-
+			finish_render_profiling();
 			lcd_copy_data();
-
-			if(IS_LCD_TRANSFER_PROFILING_ENABLED)
-			{
-				__HAL_TIM_SET_COUNTER(&htim16, 0);
-			}
+			start_lcd_data_transfer_profiling();
 		}
 
     /* USER CODE END WHILE */

@@ -60,8 +60,6 @@ void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint1
 	// draw background
 	hagl_fill_rectangle(0, 20, LCD_WIDTH, LCD_HEIGHT, BLUE);
 
-	// todo add method which draws rectangle border, or just clean up magic numbers
-	// draw distance bar
 	hagl_fill_rectangle(5, 59, LCD_WIDTH - 5, 89, WHITE);
 	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, LCD_WIDTH - DISTANCE_BAR_BORDER, 79, BLACK);
 
@@ -71,7 +69,6 @@ void draw_distance_sensor_demo(uint8_t top_offset, uint8_t top_bar_height, uint1
 		distance_reading = MAX_VALID_DISTANCE;
 	}
 
-	// todo make sure int32 is mapped onto int 16 correctly
 	int16_t distance_mapped_onto_x = (int16_t)map_ranges((int32_t)distance_reading, 0, MAX_VALID_DISTANCE, DISTANCE_BAR_BORDER, LCD_WIDTH - 30);
 	hagl_fill_rectangle(DISTANCE_BAR_BORDER, 69, distance_mapped_onto_x, 79, RED);
 }

@@ -215,6 +215,9 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+	const uint8_t TOP_BAR_HEIGHT = 20;
+	volatile static uint16_t adc1_readings[2];
+
 	// init distance sensor timer channels
 	if(HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1) != HAL_OK)
 		Error_Handler();
@@ -227,11 +230,6 @@ int main(void)
 	HAL_Delay(1000);
 	lcd_init();
 
-	// setup GUI
-	uint8_t TOP_BAR_HEIGHT = 20;
-
-	// setup joysticks ADC
-	volatile static uint16_t adc1_readings[2];
 
 	// setup ADC1 reading with DMA
 	// channel 1: joystick X
@@ -284,10 +282,12 @@ int main(void)
 				Error_Handler();
 		}
 
+	}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	}
+
   /* USER CODE END 3 */
 }
 

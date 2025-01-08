@@ -72,7 +72,7 @@ void SystemClock_Config(void);
 bool IS_RENDER_PROFILING_ENABLED = true;
 bool IS_LCD_TRANSFER_PROFILING_ENABLED = true;
 
-static uint32_t GUI_PAGES_COUNT = 3;
+static const uint32_t GUI_PAGES_COUNT = 3;
 typedef enum {
   JOYSTICK_DEMO,
   DISTANCE_SENSOR_DEMO,
